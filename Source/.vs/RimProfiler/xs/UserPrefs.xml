@@ -1,21 +1,15 @@
 ﻿<Properties>
-  <MonoDevelop.Ide.Workbench ActiveDocument="MyClass.cs">
-    <Files>
-      <File FileName="MyClass.cs" Line="11" Column="1" />
-    </Files>
+  <MonoDevelop.Ide.Workbench>
     <Pads>
       <Pad Id="ProjectPad">
         <State name="__root__">
           <Node name="RimProfiler" expanded="True">
-            <Node name="RimProfiler" expanded="True">
-              <Node name="MyClass.cs" selected="True" />
-            </Node>
+            <Node name="RimProfiler" selected="True" />
           </Node>
         </State>
       </Pad>
     </Pads>
   </MonoDevelop.Ide.Workbench>
-  <MonoDevelop.Ide.ItemProperties.RimProfiler FirstBuild="True" />
   <MonoDevelop.Ide.DebuggingService.PinnedWatches />
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
