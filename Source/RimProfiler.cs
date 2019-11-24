@@ -8,7 +8,10 @@ namespace RimProfiler
     [StaticConstructorOnStartup]
     public static class RimProfiler
     {
-        public static readonly TickProfiler TickProfiler = new TickProfiler();
+        public static readonly int MaxHistoryEntries = 3600;
+        public static readonly int AverageOverTicks = 600;
+
+        public static readonly EntityMeasurer EntityMeasurer = new EntityMeasurer();
 
         static RimProfiler()
         {
@@ -23,11 +26,11 @@ namespace RimProfiler
             // Display the timer frequency and resolution.
             if (Stopwatch.IsHighResolution)
             {
-                Log.Message("Operations timed using the system's high-resolution performance counter.");
+                Log.Message("[RimProfiler] Stopwatch using the system's high-resolution performance counter.");
             }
             else
             {
-                Log.Message("Operations timed using the DateTime class.");
+                Log.Message("[RimProfiler] Stopwatch using the DateTime class.");
             }
 
             long frequency = Stopwatch.Frequency;

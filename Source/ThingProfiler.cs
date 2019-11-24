@@ -4,17 +4,15 @@ using System.Diagnostics;
 namespace RimProfiler
 {
     /// <summary>
-    /// A profiler that keeps a running total of how long an operation takes
-    /// and stores the history for that
+    /// A profiler that keeps a running total of how long an operation is
     /// </summary>
-    public class Profiler
+    public class ThingProfiler
     {
+
         private readonly Stopwatch stopwatch = new Stopwatch();
-
-        public ProfilerHistory History { get; } = new ProfilerHistory(RimProfiler.MaxHistoryEntries);
-
+        
         /// <summary>
-        /// Starts or resumes the profiler's measurement
+        /// Starts or resumes the profiler
         /// </summary>
         public void Start()
         {
@@ -22,9 +20,9 @@ namespace RimProfiler
         }
 
         /// <summary>
-        /// Pauses the profiler's measurement but doesn't reset it
+        /// Pauses the profiler but doesn't reset it
         /// </summary>
-        public void Pause()
+        public void End()
         {
             stopwatch.Stop();
         }
@@ -34,10 +32,11 @@ namespace RimProfiler
         /// then resets the profiler.
         /// </summary>
         /// <returns>The total time recorded by this profiler</returns>
-        public void RecordMeasurement()
+        public TimeSpan RecordTime()
         {
-            History.AddMeasurement(stopwatch.Elapsed);
+            TimeSpan elapsed = stopwatch.Elapsed;
             stopwatch.Reset();
+            return elapsed;
         }
     }
 }

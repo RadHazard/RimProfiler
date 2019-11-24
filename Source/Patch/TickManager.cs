@@ -8,11 +8,11 @@ namespace RimProfiler.Patch
     {
         static void Prefix()
         {
-            RimProfiler.TickProfiler.TickStart();
+            RimProfiler.EntityMeasurer.TickStart();
         }
         static void Postfix()
         {
-            RimProfiler.TickProfiler.TickEnd();
+            RimProfiler.EntityMeasurer.TickEnd();
         }
 
     }

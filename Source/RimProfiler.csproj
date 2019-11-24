@@ -45,10 +45,13 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TickProfiler.cs" />
+    <Compile Include="EntityMeasurer.cs" />
     <Compile Include="Patch\TickManager.cs" />
     <Compile Include="Profiler.cs" />
-    <Compile Include="Patch\TickList.cs" />
+    <Compile Include="Patch\Entity.cs" />
+    <Compile Include="ProfilerHistory.cs" />
+    <Compile Include="EntityIdGetter.cs" />
+    <Compile Include="RimProfilerWindow.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Patch\" />
