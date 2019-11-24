@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Verse;
 
@@ -7,6 +8,28 @@ namespace RimProfiler
     public class EntityMeasurer
     {
         private readonly Dictionary<string, Profiler> entityProfilerDictionary = new Dictionary<string, Profiler>();
+        public List<KeyValuePair<string, TimeSpan>> Measurements { get; private set; } = new List<KeyValuePair<string, TimeSpan>>();
+
+        private bool profile;
+
+
+        public void StartProfiling()
+        {
+            if (!profile)
+            {
+                profile = true;
+                Log.Message("Starting profiling");
+            }
+        }
+
+        public void StopProfiling()
+        {
+            if (profile)
+            {
+                profile = false;
+                Log.Message("Pausing profiling");
+            }
+        }
 
         public void TickStart()
         {
@@ -15,43 +38,46 @@ namespace RimProfiler
 
         public void TickEnd()
         {
-            foreach (Profiler profiler in entityProfilerDictionary.Values)
+            if (profile)
             {
-                profiler.RecordMeasurement();
-            }
+                foreach (Profiler profiler in entityProfilerDictionary.Values)
+                {
+                    profiler.RecordMeasurement();
+                }
 
-            if (GenTicks.TicksGame % RimProfiler.AverageOverTicks == 0)
-            {
-                var topTen = GetTopX(10).Select(i => string.Format("{0}    {1}", i.Value, i.Key));
-                Log.Message(string.Format("Top ten tickers:\n{0}", string.Join("\n", topTen.ToArray())));
-                Log.Message(string.Format("Total Entities: {0}", entityProfilerDictionary.Count));
+                if (GenTicks.TicksGame % RimProfiler.UpdateInterval == 0)
+                {
+                    Measurements = entityProfilerDictionary.Select(i =>
+                    {
+                        var value = i.Value.History.GetAverageTime(RimProfiler.AveragingTime);
+                        return new KeyValuePair<string, TimeSpan>(i.Key, value);
+                    })
+                    .OrderByDescending(i => i.Value)
+                    .ToList();
+                }
             }
         }
 
         public void EntityTickStart(string entityId)
         {
-            if (!entityProfilerDictionary.ContainsKey(entityId))
+            if (profile)
             {
-                entityProfilerDictionary[entityId] = new Profiler();
-            }
 
-            entityProfilerDictionary[entityId].Start();
+                if (!entityProfilerDictionary.ContainsKey(entityId))
+                {
+                    entityProfilerDictionary[entityId] = new Profiler();
+                }
+
+                entityProfilerDictionary[entityId].Start();
+            }
         }
 
         public void EntityTickEnd(string entityId)
         {
-            entityProfilerDictionary[entityId].Pause();
-        }
-
-        public IEnumerable<KeyValuePair<string, System.TimeSpan>> GetTopX(int count)
-        {
-            return entityProfilerDictionary.Select(i =>
-                        {
-                            var value = i.Value.History.GetAverageTime(RimProfiler.AverageOverTicks);
-                            return new KeyValuePair<string, System.TimeSpan>(i.Key, value);
-                        })
-                    .OrderByDescending(i => i.Value)
-                    .Take(count);
+            if (profile)
+            {
+                entityProfilerDictionary[entityId].Pause();
+            }
         }
     }
 }

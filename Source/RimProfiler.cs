@@ -9,10 +9,11 @@ namespace RimProfiler
     public static class RimProfiler
     {
         public static readonly int MaxHistoryEntries = 3600;
-        public static readonly int AverageOverTicks = 600;
+        public static readonly int AveragingTime = 3600;
+        public static readonly int UpdateInterval = 60;
 
         public static readonly EntityMeasurer EntityMeasurer = new EntityMeasurer();
-
+        
         static RimProfiler()
         {
             var harmony = HarmonyInstance.Create("com.github.pausbrak.rimprofiler");
