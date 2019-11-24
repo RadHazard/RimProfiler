@@ -3,43 +3,43 @@ using Verse;
 
 namespace RimProfiler.Patch
 {
-    [HarmonyPatch(typeof(Entity), "Tick")]
-    class EntityTick
+    [HarmonyPatch(typeof(ThingWithComps), "Tick")]
+    class ThingWithCompsTick
     {
-        static void Prefix(Entity __instance)
+        static void Prefix(ThingWithComps __instance)
         {
             RimProfiler.EntityMeasurer.EntityTickStart(EntityIdGetter.GetId(__instance, "tick"));
         }
 
-        static void Postfix(Entity __instance)
+        static void Postfix(ThingWithComps __instance)
         {
             RimProfiler.EntityMeasurer.EntityTickEnd(EntityIdGetter.GetId(__instance, "tick"));
         }
     }
 
-    [HarmonyPatch(typeof(Entity), "TickRare")]
-    class EntityTickRare
+    [HarmonyPatch(typeof(ThingWithComps), "TickRare")]
+    class ThingWithCompsTickRare
     {
-        static void Prefix(Entity __instance)
+        static void Prefix(ThingWithComps __instance)
         {
             RimProfiler.EntityMeasurer.EntityTickStart(EntityIdGetter.GetId(__instance, "tickRare"));
         }
 
-        static void Postfix(Entity __instance)
+        static void Postfix(ThingWithComps __instance)
         {
             RimProfiler.EntityMeasurer.EntityTickEnd(EntityIdGetter.GetId(__instance, "tickRare"));
         }
     }
 
-    [HarmonyPatch(typeof(Entity), "TickLong")]
-    class EntityTickLong
+    [HarmonyPatch(typeof(ThingWithComps), "TickLong")]
+    class ThingWithCompsTickLong
     {
-        static void Prefix(Entity __instance)
+        static void Prefix(ThingWithComps __instance)
         {
             RimProfiler.EntityMeasurer.EntityTickStart(EntityIdGetter.GetId(__instance, "tickLong"));
         }
 
-        static void Postfix(Entity __instance)
+        static void Postfix(ThingWithComps __instance)
         {
             RimProfiler.EntityMeasurer.EntityTickEnd(EntityIdGetter.GetId(__instance, "tickLong"));
         }

@@ -48,10 +48,11 @@
     <Compile Include="EntityMeasurer.cs" />
     <Compile Include="Patch\TickManager.cs" />
     <Compile Include="Profiler.cs" />
-    <Compile Include="Patch\Entity.cs" />
+    <Compile Include="Patch\ThingWithComps.cs" />
     <Compile Include="ProfilerHistory.cs" />
     <Compile Include="EntityIdGetter.cs" />
-    <Compile Include="RimProfilerWindow.cs" />
+    <Compile Include="MainTabWindow_RimProfiler.cs" />
+    <Compile Include="MainButtonWorker_RimProfiler.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Patch\" />

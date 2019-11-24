@@ -1,12 +1,9 @@
-﻿using System.Linq;
-using System.Collections.Generic;
+﻿using RimWorld;
 using UnityEngine;
-using Verse;
-using RimWorld;
 
 namespace RimProfiler
 {
-    public class RimProfilerWindow : MainTabWindow
+    public class MainTabWindow_RimProfiler : MainTabWindow
     {
         public override Vector2 RequestedTabSize => new Vector2(350f, 500f);
 

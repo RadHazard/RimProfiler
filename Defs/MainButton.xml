@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <MainButtonDef>
+    <defName>RimProfiler_UI</defName>
+    <label>RimProfiler</label>
+    <description>Profile the performance of various things</description>
+    <tabWindowClass>RimProfiler.MainTabWindow_RimProfiler</tabWindowClass>
+    <!-- <workerClass>RimProfiler.MainButtonWorker_RimProfiler</workerClass> -->
+    <order>499</order>
+    <validWithoutMap>true</validWithoutMap>
+  </MainButtonDef>
+</Defs>

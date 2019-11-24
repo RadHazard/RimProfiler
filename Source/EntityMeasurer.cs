@@ -22,8 +22,9 @@ namespace RimProfiler
 
             if (GenTicks.TicksGame % RimProfiler.AverageOverTicks == 0)
             {
-                var topTen = GetTopX(10).Select(i => string.Format("{0}    {1}", i.Key, i.Value));
+                var topTen = GetTopX(10).Select(i => string.Format("{0}    {1}", i.Value, i.Key));
                 Log.Message(string.Format("Top ten tickers:\n{0}", string.Join("\n", topTen.ToArray())));
+                Log.Message(string.Format("Total Entities: {0}", entityProfilerDictionary.Count));
             }
         }
 
