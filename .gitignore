@@ -2,3 +2,7 @@ Source/packages/
 Source/bin/
 Source/obj/
 Source/.vs/
+
+*.pdb
+*.csproj
+*.sln
