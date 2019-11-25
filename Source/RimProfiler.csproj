@@ -39,6 +39,10 @@
     <Reference Include="0Harmony">
       <HintPath>packages\Lib.Harmony.1.2.0.1\lib\net35\0Harmony.dll</HintPath>
     </Reference>
+    <Reference Include="BadHygiene">
+      <HintPath>..\..\..\..\Downloads\BadHygiene.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="RimProfiler.cs">

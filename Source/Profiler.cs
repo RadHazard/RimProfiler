@@ -10,6 +10,7 @@ namespace RimProfiler
     public class Profiler
     {
         private readonly Stopwatch stopwatch = new Stopwatch();
+        private int invocations;
 
         public ProfilerHistory History { get; } = new ProfilerHistory(RimProfiler.MaxHistoryEntries);
 
@@ -18,6 +19,7 @@ namespace RimProfiler
         /// </summary>
         public void Start()
         {
+            invocations++;
             stopwatch.Start();
         }
 
@@ -36,7 +38,8 @@ namespace RimProfiler
         /// <returns>The total time recorded by this profiler</returns>
         public void RecordMeasurement()
         {
-            History.AddMeasurement(stopwatch.Elapsed);
+            History.AddMeasurement(stopwatch.Elapsed, invocations);
+            invocations = 0;
             stopwatch.Reset();
         }
     }

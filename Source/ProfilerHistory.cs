@@ -13,7 +13,7 @@ namespace RimProfiler
     {
 
         private readonly Stopwatch stopwatch = new Stopwatch();
-        private readonly Queue<TimeSpan> q = new Queue<TimeSpan>();
+        private readonly Queue<HistoryEntry> q = new Queue<HistoryEntry>();
         private readonly long MaxEntries;
 
         /// <summary>
@@ -38,9 +38,11 @@ namespace RimProfiler
         /// Records the given <paramref name="measurement"/> as a history entry
         /// </summary>
         /// <param name="measurement">The measurement to record.</param>
-        public void AddMeasurement(TimeSpan measurement)
+        /// <param name="invocations">The number of separate invocations</param>
+        public void AddMeasurement(TimeSpan measurement, int invocations)
         {
-            q.Enqueue(measurement);
+
+            q.Enqueue(new HistoryEntry(measurement, invocations));
 
             // Remove old entries if we're over the limit
             while (q.Count > MaxEntries) q.Dequeue();
@@ -51,7 +53,7 @@ namespace RimProfiler
         /// </summary>
         /// <returns>An IEnumerable of the latest run time measurements.</returns>
         /// <param name="count">The number of runtimes to return.</param>
-        public IEnumerable<TimeSpan> GetLatestMeasurements(int count)
+        public IEnumerable<HistoryEntry> GetLatestMeasurements(int count)
         {
             return q.Reverse().Take(count);
         }
@@ -62,12 +64,37 @@ namespace RimProfiler
         /// </summary>
         /// <returns>The average runtime.</returns>
         /// <param name="count">The number of runtimes to average.</param>
-        public TimeSpan GetAverageTime(int count)
+        public AverageResult AverageHistory(int count)
         {
-            double doubleAverageTicks = GetLatestMeasurements(count).Average(timeSpan => timeSpan.Ticks);
-            long longAverageTicks = Convert.ToInt64(doubleAverageTicks);
+            var measurements = GetLatestMeasurements(count);
+            long averageTicks = Convert.ToInt64(measurements.Average(i => i.Duration.Ticks));
+            double averageInvocations = measurements.Average(i => i.Invocations);
 
-            return new TimeSpan(longAverageTicks);
+            return new AverageResult(new TimeSpan(averageTicks), averageInvocations);
+        }
+    }
+
+    public struct HistoryEntry
+    {
+        public TimeSpan Duration { get; private set; }
+        public int Invocations { get; private set; }
+
+        public HistoryEntry(TimeSpan duration, int invocations)
+        {
+            Duration = duration;
+            Invocations = invocations;
+        }
+    }
+
+    public struct AverageResult
+    {
+        public TimeSpan Duration { get; private set; }
+        public double Invocations { get; private set; }
+
+        public AverageResult(TimeSpan duration, double invocations)
+        {
+            Duration = duration;
+            Invocations = invocations;
         }
     }
 }

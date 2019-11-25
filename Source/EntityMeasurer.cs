@@ -8,9 +8,10 @@ namespace RimProfiler
     public class EntityMeasurer
     {
         private readonly Dictionary<string, Profiler> entityProfilerDictionary = new Dictionary<string, Profiler>();
-        public List<KeyValuePair<string, TimeSpan>> Measurements { get; private set; } = new List<KeyValuePair<string, TimeSpan>>();
-
         private bool profile;
+        private SortBy sortingMethod = SortBy.DURATION; //TODO - add the ability to switch this
+
+        public List<KeyValuePair<string, AverageResult>> Measurements { get; private set; } = new List<KeyValuePair<string, AverageResult>>();
 
 
         public void StartProfiling()
@@ -47,12 +48,27 @@ namespace RimProfiler
 
                 if (GenTicks.TicksGame % RimProfiler.UpdateInterval == 0)
                 {
+                    Func<KeyValuePair<string, AverageResult>, dynamic> orderingFunction;
+
+                    switch (sortingMethod)
+                    {
+                        case SortBy.DURATION:
+                            orderingFunction = i => i.Value.Duration;
+                            break;
+                        case SortBy.INVOCATIONS:
+                            orderingFunction = i => i.Value.Invocations;
+                            break;
+                        default:
+                            throw new NotImplementedException("Invalid sorting method");
+                    }
+
+
                     Measurements = entityProfilerDictionary.Select(i =>
                     {
-                        var value = i.Value.History.GetAverageTime(RimProfiler.AveragingTime);
-                        return new KeyValuePair<string, TimeSpan>(i.Key, value);
+                        var value = i.Value.History.AverageHistory(RimProfiler.AveragingTime);
+                        return new KeyValuePair<string, AverageResult>(i.Key, value);
                     })
-                    .OrderByDescending(i => i.Value)
+                    .OrderByDescending(orderingFunction)
                     .ToList();
                 }
             }
@@ -78,6 +94,12 @@ namespace RimProfiler
             {
                 entityProfilerDictionary[entityId].Pause();
             }
+        }
+
+        public enum SortBy
+        {
+            DURATION,
+            INVOCATIONS
         }
     }
 }
