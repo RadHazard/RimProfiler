@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using Verse;
+using System.Linq;
 using RimWorld;
 using UnityEngine;
+using Verse;
 
 namespace RimProfiler
 {
@@ -12,9 +13,6 @@ namespace RimProfiler
         protected virtual float ExtraBottomSpace => 53f;
         protected virtual float ExtraTopSpace => 0f;
         protected override float Margin => 6f;
-
-
-
 
         private Vector2 scrollPosition;
 
@@ -73,17 +71,19 @@ namespace RimProfiler
             float cachedHeightNoScrollbar = 3f;//TODO
             float cachedHeaderHeight = 3f;//TODO
 
+            var columns = new List<Column>();
 
-            // TODO
             // Draw Header
             float viewportWidth = size.x - 16f;
             int currentPosition = 0;
-            for (int i = 0; i < def.columns.Count; i++)
+            foreach (var column in columns)
             {
-                int num3 = (i != def.columns.Count - 1) ? ((int)cachedColumnWidths[i]) : ((int)(viewportWidth - (float)currentPosition));
-                Rect headerRect = new Rect(Math.Floor(rect..x + currentPosition), (float)(int)position.y, (float)num3, Math.Floor(cachedHeaderHeight));
-                def.columns[i].Worker.DoHeader(rects, this);
-                currentPosition += num3;
+                //TODO truncate width of last column
+                //int columnWidth = (i != def.columns.Count - 1) ? ((int)cachedColumnWidths[i]) : ((int)(viewportWidth - (float)currentPosition));
+                var columnWidth = column.Width;
+                Rect headerRect = new Rect(rect.xMin + currentPosition, rect.yMin, columnWidth, cachedHeaderHeight);
+                column.DoHeader(headerRect);
+                currentPosition += columnWidth;
             }
 
             Rect outRect = rect.BottomPart(cachedHeaderHeight);
@@ -151,8 +151,19 @@ namespace RimProfiler
         //}
     }
 
-    class Column
+    internal class Column
     {
+        public int Width { get; private set }
 
+        internal Column(int width)
+        {
+            Width = width;
+        }
+
+        internal void DoHeader(Rect headerRect)
+        {
+            // TODO
+            throw new NotImplementedException();
+        }
     }
 }
