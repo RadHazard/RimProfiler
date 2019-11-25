@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -68,22 +67,23 @@ namespace RimProfiler
 
 
 
-            float cachedHeightNoScrollbar = 3f;//TODO
-            float cachedHeaderHeight = 3f;//TODO
+            var cachedHeightNoScrollbar = 3f;//TODO
+            var cachedHeaderHeight = 3f;//TODO
+            var cachedRowHeight = 3f; //TODO
 
             var columns = new List<Column>();
 
             // Draw Header
             float viewportWidth = size.x - 16f;
-            int currentPosition = 0;
+            int xPos = 0;
             foreach (var column in columns)
             {
                 //TODO truncate width of last column
                 //int columnWidth = (i != def.columns.Count - 1) ? ((int)cachedColumnWidths[i]) : ((int)(viewportWidth - (float)currentPosition));
                 var columnWidth = column.Width;
-                Rect headerRect = new Rect(rect.xMin + currentPosition, rect.yMin, columnWidth, cachedHeaderHeight);
+                Rect headerRect = new Rect(rect.xMin + xPos, rect.yMin, columnWidth, cachedHeaderHeight);
                 column.DoHeader(headerRect);
-                currentPosition += columnWidth;
+                xPos += columnWidth;
             }
 
             Rect outRect = rect.BottomPart(cachedHeaderHeight);
@@ -92,36 +92,42 @@ namespace RimProfiler
             // Draw Body
             Widgets.BeginScrollView(outRect, ref scrollPosition, viewRect, true);
 
-            int num4 = 0;
-            foreach (var measurement in RimProfiler.EntityMeasurer.Measurements)
+            // TODO - abstract this into a virtual scrolling class - UI toolkit?
+            // Only render the rows that are in view
+            int rowCountToSkip = (int) Math.Floor(scrollPosition.y / cachedRowHeight);
+            int rowCountToRender = (int) Math.Ceiling(outRect.height / cachedRowHeight) + 1; // Add a an extra because we show a partial row at both ends
+
+            // TODO - does C# have an enumerate() equivalent?
+            var measurements = RimProfiler.EntityMeasurer.Measurements;
+            for (int i = 0; i <= rowCountToRender; i++)
             {
-                currentPosition = 0;
-                if (!((float)num4 - scrollPosition.y + (float)(int)cachedRowHeights[j] < 0f) && !((float)num4 - scrollPosition.y > outRect.height))
+                int currentRow = rowCountToSkip + i;
+                var measurement = measurements[currentRow];
+                float yPos = currentRow * cachedRowHeight; 
+
+                // Draw each row
+                GUI.color = new Color(1f, 1f, 1f, 0.2f);
+                Widgets.DrawLineHorizontal(0f, yPos, viewRect.width);
+
+                GUI.color = Color.white;
+                Rect rowRect = new Rect(0f, yPos, viewRect.width, cachedRowHeight);
+                if (Mouse.IsOver(rowRect))
                 {
-                    GUI.color = new Color(1f, 1f, 1f, 0.2f);
-                    Widgets.DrawLineHorizontal(0f, (float)num4, viewRect.width);
-                    GUI.color = Color.white;
-                    Rect rect2 = new Rect(0f, (float)num4, viewRect.width, (float)(int)cachedRowHeights[j]);
-                    if (Mouse.IsOver(rect2))
-                    {
-                        GUI.DrawTexture(rect2, TexUI.HighlightTex);
-                    }
-                    for (int k = 0; k < def.columns.Count; k++)
-                    {
-                        int num5 = (k != def.columns.Count - 1) ? ((int)cachedColumnWidths[k]) : ((int)(viewportWidth - (float)currentPosition));
-                        Rect rect3 = new Rect((float)currentPosition, (float)num4, (float)num5, (float)(int)cachedRowHeights[j]);
-                        def.columns[k].Worker.DoCell(rect3, cachedPawns[j], this);
-                        currentPosition += num5;
-                    }
-                    if (cachedPawns[j].Downed)
-                    {
-                        GUI.color = new Color(1f, 0f, 0f, 0.5f);
-                        Vector2 center = rect2.center;
-                        Widgets.DrawLineHorizontal(0f, center.y, viewRect.width);
-                        GUI.color = Color.white;
-                    }
+                    GUI.DrawTexture(rowRect, TexUI.HighlightTex);
                 }
-                num4 += (int)cachedRowHeights[j];
+
+                xPos = 0;
+                foreach (var column in columns)
+                {
+                    // Draw each cell
+                    //TODO truncate width of last column
+                    //int columnWidth = (i != def.columns.Count - 1) ? ((int)cachedColumnWidths[i]) : ((int)(viewportWidth - (float)currentPosition));
+                    Rect cellRect = new Rect(xPos, yPos, column.Width, cachedRowHeight);
+                    column.DoCell(cellRect, measurement);
+                    xPos += column.Width;
+                }
+
+                yPos += cachedRowHeight;
             }
             Widgets.EndScrollView();
         }
@@ -153,7 +159,7 @@ namespace RimProfiler
 
     internal class Column
     {
-        public int Width { get; private set }
+        public int Width { get; private set; }
 
         internal Column(int width)
         {
@@ -161,6 +167,12 @@ namespace RimProfiler
         }
 
         internal void DoHeader(Rect headerRect)
+        {
+            // TODO
+            throw new NotImplementedException();
+        }
+
+        internal void DoCell(Rect cellRect, KeyValuePair<string, AverageResult> measurement)
         {
             // TODO
             throw new NotImplementedException();
