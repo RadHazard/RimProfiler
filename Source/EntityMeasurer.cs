@@ -11,7 +11,7 @@ namespace RimProfiler
         private bool profile;
         private SortBy sortingMethod = SortBy.DURATION; //TODO - add the ability to switch this
 
-        public List<KeyValuePair<string, AverageResult>> Measurements { get; private set; } = new List<KeyValuePair<string, AverageResult>>();
+        public List<AverageResult> Measurements { get; private set; } = new List<AverageResult>();
 
 
         public void StartProfiling()
@@ -48,25 +48,24 @@ namespace RimProfiler
 
                 if (GenTicks.TicksGame % RimProfiler.UpdateInterval == 0)
                 {
-                    Func<KeyValuePair<string, AverageResult>, dynamic> orderingFunction;
+                    Func<AverageResult, dynamic> orderingFunction;
 
                     switch (sortingMethod)
                     {
                         case SortBy.DURATION:
-                            orderingFunction = i => i.Value.Duration;
+                            orderingFunction = i => i.Duration;
                             break;
                         case SortBy.INVOCATIONS:
-                            orderingFunction = i => i.Value.Invocations;
+                            orderingFunction = i => i.Invocations;
                             break;
                         default:
                             throw new NotImplementedException("Invalid sorting method");
                     }
 
 
-                    Measurements = entityProfilerDictionary.Select(i =>
+                    Measurements = entityProfilerDictionary.Values.Select(i =>
                     {
-                        var value = i.Value.History.AverageHistory(RimProfiler.AveragingTime);
-                        return new KeyValuePair<string, AverageResult>(i.Key, value);
+                        return i.History.AverageHistory(RimProfiler.AveragingTime);
                     })
                     .OrderByDescending(orderingFunction)
                     .ToList();
@@ -81,7 +80,7 @@ namespace RimProfiler
 
                 if (!entityProfilerDictionary.ContainsKey(entityId))
                 {
-                    entityProfilerDictionary[entityId] = new Profiler();
+                    entityProfilerDictionary[entityId] = new Profiler(entityId);
                 }
 
                 entityProfilerDictionary[entityId].Start();

@@ -31,8 +31,8 @@ namespace RimProfiler
 
             //TODO - add tabs
             DoThingTab(inRect.ContractedBy(Margin)
-                    .BottomPart(ExtraTopSpace)
-                    .TopPart(ExtraBottomSpace));
+                    .BottomPart(size.y - ExtraTopSpace)
+                    .TopPart(size.y - (ExtraBottomSpace)); // TODO finish this
 
             GUI.EndGroup();
         }
@@ -53,25 +53,28 @@ namespace RimProfiler
         {
             GUI.BeginGroup(rect);
 
-            Listing_Standard listing = new Listing_Standard();
-            listing.Begin(rect);
+            Log.Message(string.Format("({0}, {1}) ({2}, {3})", rect.xMin, rect.xMax, rect.yMin, rect.yMax));
 
-            foreach (var measurement in RimProfiler.EntityMeasurer.Measurements)
+            //Listing_Standard listing = new Listing_Standard();
+            //listing.Begin(rect);
+
+            //foreach (var measurement in RimProfiler.EntityMeasurer.Measurements)
+            //{
+            //    listing.Label(string.Format("{0,-16}  {1,10:N2}    {2}", measurement.Duration, measurement.Invocations, measurement.Name));
+            //}
+
+            //listing.End();
+            
+            var cachedHeightNoScrollbar = 30f;//TODO
+            var cachedHeaderHeight = 30f;//TODO
+            var cachedRowHeight = 30f; //TODO
+
+            var columns = new List<Column>
             {
-                var result = measurement.Value;
-                listing.Label(string.Format("{0,-16}  {1,10:N2}    {2}", result.Duration, result.Invocations, measurement.Key));
-            }
-
-            listing.End();
-            GUI.EndGroup();
-
-
-
-            var cachedHeightNoScrollbar = 3f;//TODO
-            var cachedHeaderHeight = 3f;//TODO
-            var cachedRowHeight = 3f; //TODO
-
-            var columns = new List<Column>();
+                new NameColumn(),
+                new DurationColumn(),
+                new InvocationsColumn()
+            };
 
             // Draw Header
             float viewportWidth = size.x - 16f;
@@ -92,18 +95,25 @@ namespace RimProfiler
             // Draw Body
             Widgets.BeginScrollView(outRect, ref scrollPosition, viewRect, true);
 
+            var measurements = RimProfiler.EntityMeasurer.Measurements;
+
             // TODO - abstract this into a virtual scrolling class - UI toolkit?
             // Only render the rows that are in view
-            int rowCountToSkip = (int) Math.Floor(scrollPosition.y / cachedRowHeight);
-            int rowCountToRender = (int) Math.Ceiling(outRect.height / cachedRowHeight) + 1; // Add a an extra because we show a partial row at both ends
+            int rowCountToSkip = (int)Math.Floor(scrollPosition.y / cachedRowHeight);
+            int rowCountToRender = (int)Math.Min((Math.Ceiling(outRect.height / cachedRowHeight) + 1), measurements.Count - rowCountToSkip); // Add a an extra because we show a partial row at both ends
 
             // TODO - does C# have an enumerate() equivalent?
-            var measurements = RimProfiler.EntityMeasurer.Measurements;
-            for (int i = 0; i <= rowCountToRender; i++)
+            for (int i = 0; i < rowCountToRender; i++)
             {
                 int currentRow = rowCountToSkip + i;
+                if (currentRow >= measurements.Count)
+                {
+                    Log.Error("Out of range! " + currentRow + "/" + measurements.Count);
+                    break;
+                }
+
                 var measurement = measurements[currentRow];
-                float yPos = currentRow * cachedRowHeight; 
+                float yPos = currentRow * cachedRowHeight;
 
                 // Draw each row
                 GUI.color = new Color(1f, 1f, 1f, 0.2f);
@@ -130,6 +140,8 @@ namespace RimProfiler
                 yPos += cachedRowHeight;
             }
             Widgets.EndScrollView();
+
+            GUI.EndGroup();
         }
 
         //private void RecacheSize()
@@ -157,25 +169,132 @@ namespace RimProfiler
         //}
     }
 
-    internal class Column
+    internal abstract class Column
     {
-        public int Width { get; private set; }
+        public string Label { get; }
+        public int Width { get; }
 
-        internal Column(int width)
+        protected virtual Color DefaultHeaderColor => Color.white;
+        protected virtual GameFont DefaultHeaderFont => GameFont.Small;
+
+        internal Column(string label, int width)
         {
+            Label = label;
             Width = width;
         }
 
         internal void DoHeader(Rect headerRect)
         {
-            // TODO
-            throw new NotImplementedException();
+            if (!Label.NullOrEmpty())
+            {
+                Text.Font = DefaultHeaderFont;
+                GUI.color = DefaultHeaderColor;
+                Text.Anchor = TextAnchor.LowerCenter;
+
+                Widgets.Label(headerRect.BottomPart(3f), Label.Truncate(headerRect.width, null));
+
+                Text.Anchor = TextAnchor.UpperLeft;
+                GUI.color = Color.white;
+                Text.Font = GameFont.Small;
+            }
         }
 
-        internal void DoCell(Rect cellRect, KeyValuePair<string, AverageResult> measurement)
+        internal void DoCell(Rect cellRect, AverageResult measurement)
         {
-            // TODO
-            throw new NotImplementedException();
+            Rect rect2 = cellRect.BottomPart(30f);
+            string textFor = GetText(measurement);
+            if (!textFor.NullOrEmpty())
+            {
+                Text.Font = GameFont.Small;
+                Text.Anchor = TextAnchor.MiddleLeft;
+                Text.WordWrap = false;
+
+                Widgets.Label(rect2, textFor);
+
+                Text.WordWrap = true;
+                Text.Anchor = TextAnchor.UpperLeft;
+            }
+        }
+
+        protected abstract string GetText(AverageResult measurement);
+    }
+
+    internal class NameColumn : Column
+    {
+        internal NameColumn() : base("Name", 250) { }
+
+        protected override string GetText(AverageResult measurement)
+        {
+            return measurement.Name;
         }
     }
+
+    internal class DurationColumn : Column
+    {
+        internal DurationColumn() : base("Duration", 75) { }
+
+        protected override string GetText(AverageResult measurement)
+        {
+            return measurement.Duration.ToStringSafe();
+        }
+    }
+
+    internal class InvocationsColumn : Column
+    {
+        internal InvocationsColumn() : base("Invocations", 25) { }
+
+        protected override string GetText(AverageResult measurement)
+        {
+            return measurement.Invocations.ToStringSafe();
+        }
+    }
+
+    //public abstract class PawnColumnWorker_Text : PawnColumnWorker
+    //{
+    //    private static NumericStringComparer comparer = new NumericStringComparer();
+
+    //    protected virtual int Width => def.width;
+
+    //    public override void DoCell(Rect rect, Pawn pawn, PawnTable table)
+    //    {
+    //        Rect rect2 = new Rect(rect.x, rect.y, rect.width, Mathf.Min(rect.height, 30f));
+    //        string textFor = GetTextFor(pawn);
+    //        if (textFor != null)
+    //        {
+    //            Text.Font = GameFont.Small;
+    //            Text.Anchor = TextAnchor.MiddleLeft;
+    //            Text.WordWrap = false;
+    //            Widgets.Label(rect2, textFor);
+    //            Text.WordWrap = true;
+    //            Text.Anchor = TextAnchor.UpperLeft;
+    //            string tip = GetTip(pawn);
+    //            if (!tip.NullOrEmpty())
+    //            {
+    //                TooltipHandler.TipRegion(rect2, tip);
+    //            }
+    //        }
+    //    }
+
+    //    public override int GetMinWidth(PawnTable table)
+    //    {
+    //        return Mathf.Max(base.GetMinWidth(table), Width);
+    //    }
+
+    //    public override int Compare(Pawn a, Pawn b)
+    //    {
+    //        return comparer.Compare(GetTextFor(a), GetTextFor(a));
+    //    }
+
+    //    protected abstract string GetTextFor(Pawn pawn);
+
+    //    protected virtual string GetTip(Pawn pawn)
+    //    {
+    //        return null;
+    //    }
+
+    //    public virtual void DoHeader(Rect rect, PawnTable table)
+    //    {
+
+    //    }
+    //}
 }

@@ -11,17 +11,19 @@ namespace RimProfiler
     /// </summary>
     public class ProfilerHistory
     {
-
         private readonly Stopwatch stopwatch = new Stopwatch();
         private readonly Queue<HistoryEntry> q = new Queue<HistoryEntry>();
         private readonly long MaxEntries;
+
+        public string Name { get; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="T:RimProfiler.Profiler"/> class.
         /// </summary>
         /// <param name="maxEntries">The maximum number of entries to keep in history</param>
-        public ProfilerHistory(int maxEntries)
+        public ProfilerHistory(string name, int maxEntries)
         {
+            Name = name;
             MaxEntries = maxEntries;
         }
 
@@ -70,14 +72,14 @@ namespace RimProfiler
             long averageTicks = Convert.ToInt64(measurements.Average(i => i.Duration.Ticks));
             double averageInvocations = measurements.Average(i => i.Invocations);
 
-            return new AverageResult(new TimeSpan(averageTicks), averageInvocations);
+            return new AverageResult(Name, new TimeSpan(averageTicks), averageInvocations);
         }
     }
 
     public struct HistoryEntry
     {
-        public TimeSpan Duration { get; private set; }
-        public int Invocations { get; private set; }
+        public TimeSpan Duration { get; }
+        public int Invocations { get; }
 
         public HistoryEntry(TimeSpan duration, int invocations)
         {
@@ -88,11 +90,13 @@ namespace RimProfiler
 
     public struct AverageResult
     {
-        public TimeSpan Duration { get; private set; }
-        public double Invocations { get; private set; }
+        public string Name { get; }
+        public TimeSpan Duration { get; }
+        public double Invocations { get; }
 
-        public AverageResult(TimeSpan duration, double invocations)
+        public AverageResult(string name, TimeSpan duration, double invocations)
         {
+            Name = name;
             Duration = duration;
             Invocations = invocations;
         }

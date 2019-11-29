@@ -12,7 +12,12 @@ namespace RimProfiler
         private readonly Stopwatch stopwatch = new Stopwatch();
         private int invocations;
 
-        public ProfilerHistory History { get; } = new ProfilerHistory(RimProfiler.MaxHistoryEntries);
+        public ProfilerHistory History { get; }
+
+        public Profiler(string name)
+        {
+            History = new ProfilerHistory(name, RimProfiler.MaxHistoryEntries);
+        }
 
         /// <summary>
         /// Starts or resumes the profiler's measurement
