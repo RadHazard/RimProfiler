@@ -13,9 +13,14 @@ namespace RimProfiler
         protected virtual float ExtraTopSpace => 0f;
         protected override float Margin => 6f;
 
-        private Vector2 scrollPosition;
-
         private readonly Vector2 size = new Vector2(1000f, 500f); // TODO - calculate this
+        private readonly GUITable<AverageResult> table =
+                new GUITable<AverageResult>(
+                        () => RimProfiler.EntityMeasurer.Measurements,
+                        new NameColumn(),
+                        new DurationColumn(),
+                        new InvocationsColumn()
+                );
 
         public override Vector2 RequestedTabSize
         {
@@ -30,9 +35,9 @@ namespace RimProfiler
             GUI.BeginGroup(inRect);
 
             //TODO - add tabs
-            DoThingTab(inRect.ContractedBy(Margin)
-                    .BottomPart(size.y - ExtraTopSpace)
-                    .TopPart(size.y - (ExtraBottomSpace)); // TODO finish this
+            table.Render(inRect.ContractedBy(Margin)
+                    .BottomPartPixels(size.y - ExtraTopSpace)
+                    .TopPartPixels(size.y - ExtraBottomSpace)); // TODO finish this
 
             GUI.EndGroup();
         }
@@ -47,101 +52,6 @@ namespace RimProfiler
         {
             base.PostClose();
             RimProfiler.EntityMeasurer.StopProfiling();
-        }
-
-        private void DoThingTab(Rect rect)
-        {
-            GUI.BeginGroup(rect);
-
-            Log.Message(string.Format("({0}, {1}) ({2}, {3})", rect.xMin, rect.xMax, rect.yMin, rect.yMax));
-
-            //Listing_Standard listing = new Listing_Standard();
-            //listing.Begin(rect);
-
-            //foreach (var measurement in RimProfiler.EntityMeasurer.Measurements)
-            //{
-            //    listing.Label(string.Format("{0,-16}  {1,10:N2}    {2}", measurement.Duration, measurement.Invocations, measurement.Name));
-            //}
-
-            //listing.End();
-            
-            var cachedHeightNoScrollbar = 30f;//TODO
-            var cachedHeaderHeight = 30f;//TODO
-            var cachedRowHeight = 30f; //TODO
-
-            var columns = new List<Column>
-            {
-                new NameColumn(),
-                new DurationColumn(),
-                new InvocationsColumn()
-            };
-
-            // Draw Header
-            float viewportWidth = size.x - 16f;
-            int xPos = 0;
-            foreach (var column in columns)
-            {
-                //TODO truncate width of last column
-                //int columnWidth = (i != def.columns.Count - 1) ? ((int)cachedColumnWidths[i]) : ((int)(viewportWidth - (float)currentPosition));
-                var columnWidth = column.Width;
-                Rect headerRect = new Rect(rect.xMin + xPos, rect.yMin, columnWidth, cachedHeaderHeight);
-                column.DoHeader(headerRect);
-                xPos += columnWidth;
-            }
-
-            Rect outRect = rect.BottomPart(cachedHeaderHeight);
-            Rect viewRect = new Rect(0f, 0f, outRect.width - 16f, (float)Math.Floor(cachedHeightNoScrollbar - cachedHeaderHeight));
-
-            // Draw Body
-            Widgets.BeginScrollView(outRect, ref scrollPosition, viewRect, true);
-
-            var measurements = RimProfiler.EntityMeasurer.Measurements;
-
-            // TODO - abstract this into a virtual scrolling class - UI toolkit?
-            // Only render the rows that are in view
-            int rowCountToSkip = (int)Math.Floor(scrollPosition.y / cachedRowHeight);
-            int rowCountToRender = (int)Math.Min((Math.Ceiling(outRect.height / cachedRowHeight) + 1), measurements.Count - rowCountToSkip); // Add a an extra because we show a partial row at both ends
-
-            // TODO - does C# have an enumerate() equivalent?
-            for (int i = 0; i < rowCountToRender; i++)
-            {
-                int currentRow = rowCountToSkip + i;
-                if (currentRow >= measurements.Count)
-                {
-                    Log.Error("Out of range! " + currentRow + "/" + measurements.Count);
-                    break;
-                }
-
-                var measurement = measurements[currentRow];
-                float yPos = currentRow * cachedRowHeight;
-
-                // Draw each row
-                GUI.color = new Color(1f, 1f, 1f, 0.2f);
-                Widgets.DrawLineHorizontal(0f, yPos, viewRect.width);
-
-                GUI.color = Color.white;
-                Rect rowRect = new Rect(0f, yPos, viewRect.width, cachedRowHeight);
-                if (Mouse.IsOver(rowRect))
-                {
-                    GUI.DrawTexture(rowRect, TexUI.HighlightTex);
-                }
-
-                xPos = 0;
-                foreach (var column in columns)
-                {
-                    // Draw each cell
-                    //TODO truncate width of last column
-                    //int columnWidth = (i != def.columns.Count - 1) ? ((int)cachedColumnWidths[i]) : ((int)(viewportWidth - (float)currentPosition));
-                    Rect cellRect = new Rect(xPos, yPos, column.Width, cachedRowHeight);
-                    column.DoCell(cellRect, measurement);
-                    xPos += column.Width;
-                }
-
-                yPos += cachedRowHeight;
-            }
-            Widgets.EndScrollView();
-
-            GUI.EndGroup();
         }
 
         //private void RecacheSize()
@@ -169,83 +79,33 @@ namespace RimProfiler
         //}
     }
 
-    internal abstract class Column
+    internal class NameColumn : Column<AverageResult>
     {
-        public string Label { get; }
-        public int Width { get; }
+        internal NameColumn() : base("Name", 400) { }
 
-        protected virtual Color DefaultHeaderColor => Color.white;
-        protected virtual GameFont DefaultHeaderFont => GameFont.Small;
-
-        internal Column(string label, int width)
+        protected override string GetText(AverageResult datum)
         {
-            Label = label;
-            Width = width;
-        }
-
-        internal void DoHeader(Rect headerRect)
-        {
-            if (!Label.NullOrEmpty())
-            {
-                Text.Font = DefaultHeaderFont;
-                GUI.color = DefaultHeaderColor;
-                Text.Anchor = TextAnchor.LowerCenter;
-
-                Widgets.Label(headerRect.BottomPart(3f), Label.Truncate(headerRect.width, null));
-
-                Text.Anchor = TextAnchor.UpperLeft;
-                GUI.color = Color.white;
-                Text.Font = GameFont.Small;
-            }
-        }
-
-        internal void DoCell(Rect cellRect, AverageResult measurement)
-        {
-            Rect rect2 = cellRect.BottomPart(30f);
-            string textFor = GetText(measurement);
-            if (!textFor.NullOrEmpty())
-            {
-                Text.Font = GameFont.Small;
-                Text.Anchor = TextAnchor.MiddleLeft;
-                Text.WordWrap = false;
-
-                Widgets.Label(rect2, textFor);
-
-                Text.WordWrap = true;
-                Text.Anchor = TextAnchor.UpperLeft;
-            }
-        }
-
-        protected abstract string GetText(AverageResult measurement);
-    }
-
-    internal class NameColumn : Column
-    {
-        internal NameColumn() : base("Name", 250) { }
-
-        protected override string GetText(AverageResult measurement)
-        {
-            return measurement.Name;
+            return datum.Name;
         }
     }
 
-    internal class DurationColumn : Column
+    internal class DurationColumn : Column<AverageResult>
     {
-        internal DurationColumn() : base("Duration", 75) { }
+        internal DurationColumn() : base("Duration", 150) { }
 
-        protected override string GetText(AverageResult measurement)
+        protected override string GetText(AverageResult datum)
         {
-            return measurement.Duration.ToStringSafe();
+            return datum.Duration.ToStringSafe();
         }
     }
 
-    internal class InvocationsColumn : Column
+    internal class InvocationsColumn : Column<AverageResult>
     {
-        internal InvocationsColumn() : base("Invocations", 25) { }
+        internal InvocationsColumn() : base("Invocations", 75) { }
 
-        protected override string GetText(AverageResult measurement)
+        protected override string GetText(AverageResult datum)
         {
-            return measurement.Invocations.ToStringSafe();
+            return datum.Invocations.ToStringSafe();
         }
     }
 
